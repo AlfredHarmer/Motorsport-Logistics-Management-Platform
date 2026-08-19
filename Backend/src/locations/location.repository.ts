@@ -29,3 +29,16 @@ export const createLocation = async (
 
   return location;
 };
+
+export const getLocationById = async (
+  id: number,
+): Promise<Location | null> => {
+  const result = await pool.query<Location>(
+    `SELECT id, code, name, kind, city, country
+    FROM locations
+    WHERE id = $1`,
+    [id],
+  );
+  
+  return result.rows[0] ?? null;
+};

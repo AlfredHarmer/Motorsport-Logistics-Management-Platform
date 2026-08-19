@@ -14,4 +14,7 @@ export const createLocationSchema = z.object({
   ]),
   city: z.string().trim().min(1),
   country: z.string().trim().min(1),
-})
+});
+
+
+export const locationIdSchema = z.coerce.number().int().positive();

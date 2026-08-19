@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { getAllLocations, createLocation } from "./location.repository.js";
-import { createLocationSchema } from "./locations.schema.js";
+import { getAllLocations, createLocation, getLocationById } from "./location.repository.js";
+import { createLocationSchema, locationIdSchema } from "./locations.schema.js";
 
 export const locationRouter = Router();
 // Handles dupliate locations in the database
@@ -49,5 +49,32 @@ locationRouter.post("/", async (req, res) => {
 
     console.log("Failed to create new Location", error);
     res.status(500).json({ error: "Failed to create new locations" });
+  }
+});
+
+locationRouter.get("/:id", async (req, res) => {
+  try {
+    const validationResult = locationIdSchema.safeParse(req.params.id);
+
+    if (!validationResult.success) {
+      res.status(400).json({
+        error: "Invalid location ID",
+        details: validationResult.error.issues,
+      });
+      return;
+
+    }
+
+    const location = await getLocationById(validationResult.data);
+
+    if (location === null) {
+      res.status(404).json({ error: "Location not found" });
+      return;
+    }
+
+    res.status(200).json(location);
+  } catch (error) {
+    console.log("Failed to fetch location", error);
+    res.status(500).json({ error: "Failed to fetch location"});
   }
 });
