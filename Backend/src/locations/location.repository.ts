@@ -30,15 +30,33 @@ export const createLocation = async (
   return location;
 };
 
-export const getLocationById = async (
-  id: number,
-): Promise<Location | null> => {
+export const getLocationById = async (id: number): Promise<Location | null> => {
   const result = await pool.query<Location>(
     `SELECT id, code, name, kind, city, country
     FROM locations
     WHERE id = $1`,
     [id],
   );
-  
+
+  return result.rows[0] ?? null;
+};
+
+export const updateLocation = async (
+  id: number,
+  input: CreateLocationInput,
+): Promise<Location | null> => {
+  const result = await pool.query<Location>(
+    `UPDATE locations
+    SET
+    code = $1,
+    name = $2,
+    kind = $3,
+    city = $4,
+    country = $5
+    WHERE id = $6
+    RETURNING id, code, name, kind, city, country`,
+    [input.code, input.name, input.kind, input.city, input.country, id],
+  );
+
   return result.rows[0] ?? null;
 };

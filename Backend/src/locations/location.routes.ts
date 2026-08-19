@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { getAllLocations, createLocation, getLocationById } from "./location.repository.js";
+import {
+  getAllLocations,
+  createLocation,
+  getLocationById,
+  updateLocation,
+} from "./location.repository.js";
 import { createLocationSchema, locationIdSchema } from "./locations.schema.js";
 
 export const locationRouter = Router();
@@ -62,7 +67,6 @@ locationRouter.get("/:id", async (req, res) => {
         details: validationResult.error.issues,
       });
       return;
-
     }
 
     const location = await getLocationById(validationResult.data);
@@ -75,6 +79,52 @@ locationRouter.get("/:id", async (req, res) => {
     res.status(200).json(location);
   } catch (error) {
     console.log("Failed to fetch location", error);
-    res.status(500).json({ error: "Failed to fetch location"});
+    res.status(500).json({ error: "Failed to fetch location" });
+  }
+});
+
+locationRouter.put("/:id", async (req, res) => {
+  try {
+    const idValidation = locationIdSchema.safeParse(req.params.id);
+
+    if (!idValidation.success) {
+      res.status(400).json({
+        error: "Invalid location ID",
+        details: idValidation.error.issues,
+      });
+      return;
+    }
+
+    const bodyValidation = createLocationSchema.safeParse(req.body);
+
+    if (!bodyValidation.success) {
+      res.status(400).json({
+        error: "Invalid location data",
+        details: bodyValidation.error.issues,
+      });
+      return;
+    }
+
+    const updatedLocation = await updateLocation(
+      idValidation.data,
+      bodyValidation.data,
+    );
+
+    if (updatedLocation === null) {
+      res.status(404).json({ error: "Location not found" });
+      return;
+    }
+
+    res.status(200).json(updatedLocation);
+  } catch (error) {
+    if (hasDatabaseErrorCode(error) && error.code === "23505") {
+      res.status(409).json({
+        error: "A location with this code already exists",
+      });
+      return;
+    }
+
+    console.log("Failed to update location", error);
+    res.status(500).json({ error: "Failed to update location" });
   }
 });
