@@ -14,3 +14,11 @@ export interface Location {
   city: string;
   country: string;
 }
+
+export interface CreateLocationInput {
+  code: string;
+  name: string;
+  kind: LocationKind;
+  city: string;
+  country: string;
+}

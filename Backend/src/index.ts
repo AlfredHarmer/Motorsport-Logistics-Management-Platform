@@ -4,6 +4,8 @@ import { locationRouter } from "./locations/location.routes.js";
 
 const app = express();
 
+app.use(express.json());
+
 const PORT = 3000;
 
 app.get("/health", async (_req, res) => {
