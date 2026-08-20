@@ -1,6 +1,7 @@
 import express from "express";
 import { pool } from "./database.js";
 import { locationRouter } from "./locations/location.routes.js";
+import { championshipsRouter } from "./championships/championship.routes.js";
 
 const app = express();
 
@@ -19,5 +20,6 @@ app.get("/health", async (_req, res) => {
 });
 
 app.use("/api/locations", locationRouter);
+app.use("/api/championships", championshipsRouter);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
