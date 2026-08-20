@@ -17,4 +17,6 @@ export const createLocationSchema = z.object({
 });
 
 
+
+
 export const locationIdSchema = z.coerce.number().int().positive();

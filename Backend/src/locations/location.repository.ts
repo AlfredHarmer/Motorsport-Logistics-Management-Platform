@@ -60,3 +60,14 @@ export const updateLocation = async (
 
   return result.rows[0] ?? null;
 };
+
+export const deleteLocation = async (
+  id: number,
+): Promise<boolean> => {
+  const result = await pool.query<{ id: number }>(
+    `DELETE FROM locations WHERE id = $1
+    RETURNING id`, [id],
+  );
+
+  return result.rowCount === 1;
+};

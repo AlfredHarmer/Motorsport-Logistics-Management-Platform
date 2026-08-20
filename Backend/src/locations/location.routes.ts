@@ -4,8 +4,9 @@ import {
   createLocation,
   getLocationById,
   updateLocation,
+  deleteLocation,
 } from "./location.repository.js";
-import { createLocationSchema, locationIdSchema } from "./locations.schema.js";
+import { createLocationSchema, locationIdSchema } from "./location.schema.js";
 
 export const locationRouter = Router();
 // Handles dupliate locations in the database
@@ -18,6 +19,7 @@ const hasDatabaseErrorCode = (error: unknown): error is { code: string } => {
   );
 };
 
+// Get all locations
 locationRouter.get("/", async (_req, res) => {
   try {
     const locations = await getAllLocations();
@@ -29,6 +31,7 @@ locationRouter.get("/", async (_req, res) => {
   }
 });
 
+// Create Location
 locationRouter.post("/", async (req, res) => {
   try {
     const validationResult = createLocationSchema.safeParse(req.body);
@@ -57,6 +60,7 @@ locationRouter.post("/", async (req, res) => {
   }
 });
 
+//Get locations by id
 locationRouter.get("/:id", async (req, res) => {
   try {
     const validationResult = locationIdSchema.safeParse(req.params.id);
@@ -83,6 +87,7 @@ locationRouter.get("/:id", async (req, res) => {
   }
 });
 
+//Update location
 locationRouter.put("/:id", async (req, res) => {
   try {
     const idValidation = locationIdSchema.safeParse(req.params.id);
@@ -126,5 +131,40 @@ locationRouter.put("/:id", async (req, res) => {
 
     console.log("Failed to update location", error);
     res.status(500).json({ error: "Failed to update location" });
+  }
+});
+
+//Delete location
+locationRouter.delete("/:id", async (req, res) => {
+  try {
+    const validationResult = locationIdSchema.safeParse(req.params.id);
+
+    if (!validationResult.success) {
+      res.status(400).json({
+        error: "Invalid location ID",
+        details: validationResult.error.issues,
+      });
+      return;
+    }
+
+    const wasDeleted = await deleteLocation(validationResult.data);
+
+    if (!wasDeleted) {
+      res.status(404).json({ error: "Location not found" });
+      return;
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    if (hasDatabaseErrorCode(error) && error.code === "23503") {
+      res.status(409).json({
+        error: "Location cannot be deleted because it is still in use",
+      });
+      return;
+    }
+
+
+    console.log("Failed to fetch location", error);
+    res.status(500).json({ error: "Failed to delete location" });
   }
 });
