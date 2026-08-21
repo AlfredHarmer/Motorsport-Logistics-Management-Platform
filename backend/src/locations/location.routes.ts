@@ -7,17 +7,9 @@ import {
   deleteLocation,
 } from "./location.repository.js";
 import { createLocationSchema, locationIdSchema } from "./location.schema.js";
+import { hasDatabaseErrorCode } from "../shared/database-error.js";
 
 export const locationRouter = Router();
-// Handles dupliate locations in the database
-const hasDatabaseErrorCode = (error: unknown): error is { code: string } => {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    typeof error.code === "string"
-  );
-};
 
 // Get all locations
 locationRouter.get("/", async (_req, res) => {
@@ -162,7 +154,6 @@ locationRouter.delete("/:id", async (req, res) => {
       });
       return;
     }
-
 
     console.log("Failed to fetch location", error);
     res.status(500).json({ error: "Failed to delete location" });

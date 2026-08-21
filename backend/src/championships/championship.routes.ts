@@ -8,18 +8,12 @@ import {
   championshipIdSchema, 
   createChampionshipSchema 
 } from "./championship.schema.js";
+import { hasDatabaseErrorCode } from "../shared/database-error.js";
 
 export const championshipsRouter = Router();
 
 
-const hasDatabaseErrorCode = (error: unknown): error is { code: string } => {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    typeof error.code === "string"
-  );
-};
+
 // Get all championships
 championshipsRouter.get("/", async (_req, res) => {
   try {
