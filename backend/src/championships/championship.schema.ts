@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createChampionshipSchema = z.object({
-  code: z.string().trim().min(1),
+  code: z.string().trim().min(1).toUpperCase(),
   name: z.string().trim().min(1),
 });
 
