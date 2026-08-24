@@ -62,3 +62,14 @@ export const updateChampionship = async (
 
   return result.rows[0] ?? null;
 };
+
+export const deleteChampionship = async (
+  id: number,
+): Promise<boolean> => {
+  const result = await pool.query<{ id: number }>(
+    `DELETE FROM championships WHERE id = $1
+    RETURNING id`, [id],
+  );
+
+  return result.rowCount === 1;
+};

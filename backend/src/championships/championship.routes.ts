@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createChampionship,
+  deleteChampionship,
   getAllChampionships,
   getChampionshipById,
   updateChampionship,
@@ -124,5 +125,38 @@ championshipsRouter.put("/:id", async (req, res) => {
 
     console.error("Failed to update championship", error);
     res.status(500).json({ error: "Failed to update championship" });
+  }
+});
+// Delete championship
+championshipsRouter.delete("/:id", async (req, res) => {
+  try {
+    const validationResult = championshipIdSchema.safeParse(req.params.id);
+
+    if (!validationResult.success) {
+      res.status(400).json({
+        error: "Invalid championship ID",
+        details: validationResult.error.issues,
+      });
+      return;
+    }
+
+    const wasDeleted = await deleteChampionship(validationResult.data);
+
+    if (!wasDeleted) {
+      res.status(404).json({ error: "Championship not found"});
+      return;
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    if (hasDatabaseErrorCode(error) && error.code === "23503") {
+      res.status(409).json({
+        error: "Championship cannot be deleted because it is still in use",
+      });
+      return;
+    }
+    
+    console.error("Failed to delete championship", error );
+    res.status(500).json({ error: "Failed to delete championship"});
   }
 });
