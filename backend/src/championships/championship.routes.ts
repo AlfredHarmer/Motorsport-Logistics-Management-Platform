@@ -3,6 +3,7 @@ import {
   createChampionship,
   getAllChampionships,
   getChampionshipById,
+  updateChampionship,
 } from "./championship.repository.js";
 import { 
   championshipIdSchema, 
@@ -53,7 +54,7 @@ championshipsRouter.post("/", async (req, res) => {
     res.status(500).json({ error: "Failed to create new championship" });
   }
 });
-
+// Get Championship by ID
 championshipsRouter.get("/:id", async (req, res) => {
   try {
     const validationResult = championshipIdSchema.safeParse(req.params.id);
@@ -77,5 +78,51 @@ championshipsRouter.get("/:id", async (req, res) => {
   } catch (error) {
     console.error("Failed to fetch championship", error);
     res.status(500).json({ error: "Failed to fetch championship"});
+  }
+});
+// Update championship
+championshipsRouter.put("/:id", async (req, res) => {
+  try {
+    const idValidation = championshipIdSchema.safeParse(req.params.id);
+
+    if (!idValidation.success) {
+      res.status(400).json({
+        error: "Invalid championship ID",
+        details: idValidation.error.issues,
+      });
+      return;
+    }
+
+    const bodyValidation = createChampionshipSchema.safeParse(req.body);
+  
+    if (!bodyValidation.success) {
+      res.status(400).json({
+        error: "Invalid championship data",
+        details: bodyValidation.error.issues,
+      });
+      return;
+    }
+
+    const updatedChampionship = await updateChampionship(
+      idValidation.data, 
+      bodyValidation.data
+    );
+
+    if (updatedChampionship === null) {
+      res.status(404).json({ error: "Championship not found" });
+      return;
+    }
+
+    res.status(200).json(updatedChampionship);
+  } catch (error) {
+    if (hasDatabaseErrorCode(error) && error.code === "23505") {
+      res.status(409).json({
+        error: "A championship with this code already exists",
+      });
+      return;
+    }
+
+    console.error("Failed to update championship", error);
+    res.status(500).json({ error: "Failed to update championship" });
   }
 });

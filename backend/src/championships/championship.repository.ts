@@ -45,3 +45,20 @@ export const getChampionshipById = async (
 
   return result.rows[0] ?? null;
 };
+
+export const updateChampionship = async (
+  id: number,
+  input: CreateChampionshipInput,
+): Promise<Championship | null> => {
+  const result = await pool.query<Championship>(
+    `UPDATE championships
+    SET
+    code = $1,
+    name = $2
+    WHERE id = $3
+    RETURNING id, code, name`,
+    [input.code, input.name, id],
+  );
+
+  return result.rows[0] ?? null;
+};
