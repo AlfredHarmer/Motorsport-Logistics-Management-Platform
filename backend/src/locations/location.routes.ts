@@ -47,7 +47,7 @@ locationRouter.post("/", async (req, res) => {
       return;
     }
 
-    console.log("Failed to create new Location", error);
+    console.error("Failed to create new Location", error);
     res.status(500).json({ error: "Failed to create new locations" });
   }
 });
@@ -74,7 +74,7 @@ locationRouter.get("/:id", async (req, res) => {
 
     res.status(200).json(location);
   } catch (error) {
-    console.log("Failed to fetch location", error);
+    console.error("Failed to fetch location", error);
     res.status(500).json({ error: "Failed to fetch location" });
   }
 });
@@ -121,7 +121,7 @@ locationRouter.put("/:id", async (req, res) => {
       return;
     }
 
-    console.log("Failed to update location", error);
+    console.error("Failed to update location", error);
     res.status(500).json({ error: "Failed to update location" });
   }
 });
@@ -155,7 +155,7 @@ locationRouter.delete("/:id", async (req, res) => {
       return;
     }
 
-    console.log("Failed to fetch location", error);
+    console.error("Failed to fetch location", error);
     res.status(500).json({ error: "Failed to delete location" });
   }
 });

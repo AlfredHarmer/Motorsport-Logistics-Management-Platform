@@ -7,8 +7,8 @@ import type {
 export const getAllChampionships = async (): Promise<Championship[]> => {
   const result = await pool.query<Championship>(
     `SELECT id, code, name
-			FROM championships
-      ORDER BY code`,
+    FROM championships
+    ORDER BY code`,
   );
 
   return result.rows;
@@ -19,8 +19,8 @@ export const createChampionship = async (
 ): Promise<Championship> => {
   const result = await pool.query<Championship>(
     `INSERT INTO championships (code, name)
-        VALUES ($1, $2)
-        RETURNING id, code, name`,
+    VALUES ($1, $2)
+    RETURNING id, code, name`,
     [input.code, input.name],
   );
 
@@ -38,8 +38,8 @@ export const getChampionshipById = async (
 ): Promise<Championship | null> => {
   const result = await pool.query<Championship>(
     `SELECT id, code, name
-        FROM championships
-        WHERE id = $1`,
+    FROM championships
+    WHERE id = $1`,
     [id],
   );
 
