@@ -59,3 +59,27 @@ export const getChampionshipSeasonById = async (
 
   return result.rows[0] ?? null;
 };
+
+export const updateChampionshipSeason = async (
+  id: number,
+  input: CreateChampionshipSeasonInput,
+): Promise<ChampionshipSeason | null> => {
+  const result = await pool.query<ChampionshipSeason>(
+    `UPDATE championship_seasons
+    SET
+    championship_id = $1,
+    name = $2,
+    start_date = $3,
+    end_date = $4
+    WHERE id = $5
+    RETURNING
+    id,
+    championship_id AS "championshipId",
+    name,
+    start_date::TEXT AS "startDate",
+    end_date::TEXT AS "endDate"`,
+    [input.championshipId, input.name, input.startDate, input.endDate, id],
+  );
+
+  return result.rows[0] ?? null;
+};

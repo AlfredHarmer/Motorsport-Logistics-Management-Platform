@@ -2,7 +2,8 @@ import { Router } from "express";
 import {
   createChampionshipSeason,
   getAllChampionshipSeasons,
-  getChampionshipSeasonById
+  getChampionshipSeasonById,
+  updateChampionshipSeason
 } from "./championship-season.repository.js";
 import { 
   championshipSeasonIdSchema, 
@@ -81,3 +82,49 @@ championshipSeasonsRouter.get("/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch championship season"});
   }
 }); 
+//Update championship season
+championshipSeasonsRouter.put("/:id", async (req, res) => {
+  try {
+    const idValidation = championshipSeasonIdSchema.safeParse(req.params.id);
+
+    if (!idValidation.success) {
+      res.status(400).json({
+        error: "Invalid championship season ID",
+        details: idValidation.error.issues,
+      });
+      return;
+    } 
+
+    const bodyValidation = createChampionshipSeasonSchema.safeParse(req.body);
+
+    if (!bodyValidation.success) {
+      res.status(400).json({
+        error: "Invalid championship season data",
+        details: bodyValidation.error.issues,
+      });
+      return; 
+    }
+
+    const updatedChampionshipSeason = await updateChampionshipSeason(
+      idValidation.data, 
+      bodyValidation.data,
+    );
+
+    if (updatedChampionshipSeason === null) {
+      res.status(404).json({ error: "Championship season not found"});
+      return;
+    }
+
+    res.status(200).json(updatedChampionshipSeason);
+  } catch (error) {
+    if (hasDatabaseErrorCode(error) && error.code === "23503") {
+      res.status(400).json({
+        error: "Championship ID does not exist",
+      });
+      return;
+    }
+
+    console.error("Failed to update championship season", error);
+    res.status(500).json({ error: "Failed to update championship season"});
+  }
+});
