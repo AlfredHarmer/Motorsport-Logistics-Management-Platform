@@ -1,7 +1,8 @@
 import { Router } from "express";
 import {
   createChampionshipSeason,
-  getAllChampionshipSeasons
+  getAllChampionshipSeasons,
+  getChampionshipSeasonById
 } from "./championship-season.repository.js";
 import { 
   championshipSeasonIdSchema, 
@@ -10,10 +11,9 @@ import {
 import { hasDatabaseErrorCode } from "../shared/database-error.js";
 
 
-
 export const championshipSeasonsRouter = Router();
 
-
+// Get all championship seasons
 championshipSeasonsRouter.get("/", async (_req, res) => {
   try {
     const results = await getAllChampionshipSeasons();
@@ -25,7 +25,7 @@ championshipSeasonsRouter.get("/", async (_req, res) => {
     res.status(500).json({ error: "Failed to fetch championship seasons"});
   }
 });
-
+//Create championship season
 championshipSeasonsRouter.post("/", async (req, res) => {
   try {
     const validationResult = createChampionshipSeasonSchema.safeParse(req.body);
@@ -55,3 +55,29 @@ championshipSeasonsRouter.post("/", async (req, res) => {
    res.status(500).json({ error: "Failed to create championship season" });
   }
 });
+//Get championship season by id
+championshipSeasonsRouter.get("/:id", async (req, res) => {
+  try {
+    const validationResult = championshipSeasonIdSchema.safeParse(req.params.id);
+
+    if (!validationResult.success) {
+      res.status(400).json({
+        error: "Invalid championship season ID",
+        details: validationResult.error.issues,
+      });
+      return;
+    }
+
+    const championshipSeason = await getChampionshipSeasonById(validationResult.data);
+
+    if (championshipSeason === null) {
+      res.status(404).json({ error: "Championship season not found" });
+      return;
+    }
+
+    return res.status(200).json(championshipSeason);
+  } catch (error) {
+    console.error("Failed to fetch championship season", error);
+    res.status(500).json({ error: "Failed to fetch championship season"});
+  }
+}); 
