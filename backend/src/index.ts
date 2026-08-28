@@ -3,6 +3,7 @@ import { pool } from "./database.js";
 import { locationRouter } from "./locations/location.routes.js";
 import { championshipsRouter } from "./championships/championship.routes.js";
 import { championshipSeasonsRouter } from "./championship-seasons/championship-seasons.routes.js";
+import { eventsRouter } from "./events/event.routes.js";
 
 const app = express();
 
@@ -23,5 +24,6 @@ app.get("/health", async (_req, res) => {
 app.use("/api/locations", locationRouter);
 app.use("/api/championships", championshipsRouter);
 app.use("/api/championship-seasons", championshipSeasonsRouter);
+app.use("/api/events", eventsRouter);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
