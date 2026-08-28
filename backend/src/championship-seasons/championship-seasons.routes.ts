@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createChampionshipSeason,
+  deleteChampionshipSeason,
   getAllChampionshipSeasons,
   getChampionshipSeasonById,
   updateChampionshipSeason
@@ -126,5 +127,38 @@ championshipSeasonsRouter.put("/:id", async (req, res) => {
 
     console.error("Failed to update championship season", error);
     res.status(500).json({ error: "Failed to update championship season"});
+  }
+});
+
+championshipSeasonsRouter.delete("/:id", async (req, res) => {
+  try {
+    const validationResult = championshipSeasonIdSchema.safeParse(req.params.id);
+
+    if (!validationResult.success) {
+      res.status(400).json({
+        error: "Invalid championship season ID",
+        details: validationResult.error.issues,
+      });
+      return;
+    }
+
+    const wasDeleted = await deleteChampionshipSeason(validationResult.data);
+
+    if (!wasDeleted) {
+      res.status(404).json({ error: "Championship season not found"});
+      return;
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    if (hasDatabaseErrorCode(error) && error.code === "23503") {
+      res.status(409).json({
+        error: "Championship season cannot be deleted because it is referenced by an event",
+    });
+    return;
+    }
+
+    console.error("Failed to delete championship season", error);
+    res.status(500).json({ error: "Failed to delete championship season"});
   }
 });

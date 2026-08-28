@@ -155,7 +155,7 @@ locationRouter.delete("/:id", async (req, res) => {
       return;
     }
 
-    console.error("Failed to fetch location", error);
+    console.error("Failed to delete location", error);
     res.status(500).json({ error: "Failed to delete location" });
   }
 });
