@@ -7,7 +7,7 @@ export const createEventRecordSchema = z.object({
   locationId: z.coerce.number().int().positive(),
   startDate: z.iso.date(),
   endDate: z.iso.date(),
-  notes: z.string().trim().min(1).nullable().optional(),
+  notes: z.string().trim().min(1).nullable().optional().default(null),
 })
 .refine(
   ({ startDate, endDate }) => endDate >= startDate,
