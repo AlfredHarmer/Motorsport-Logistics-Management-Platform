@@ -19,7 +19,7 @@ export const getAllEvents = async (): Promise<EventRecord[]> => {
 };
 
 export const createEvent = async (
-  input: CreateEventRecordInput
+  input: CreateEventRecordInput,
 ): Promise<EventRecord> => {
   const result = await pool.query<EventRecord>(
     `INSERT INTO events (
@@ -58,4 +58,25 @@ export const createEvent = async (
     throw new Error("Event was created but no row returned");
   }
   return event;
+};
+
+export const getEventById = async (
+  id: number,
+): Promise<EventRecord | null> => {
+  const result = await pool.query<EventRecord>(
+    `SELECT
+    id,
+    code,
+    championship_season_id AS "championshipSeasonId",
+    name,
+    location_id AS "locationId",
+    start_date:: TEXT AS "startDate",
+    end_date:: TEXT AS "endDate",
+    notes
+    FROM events
+    WHERE id = $1`,
+    [id],
+  );
+
+  return result.rows[0] ?? null;
 };

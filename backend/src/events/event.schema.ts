@@ -16,3 +16,5 @@ export const createEventRecordSchema = z.object({
     path: ["endDate"],
   },
 );
+
+export const eventIdSchema = z.coerce.number().int().positive();
