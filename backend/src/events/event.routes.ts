@@ -4,6 +4,7 @@ import {
   createEvent,
   getEventById,
   updateEvent,
+  deleteEvent,
 } from "./event.repository.js";
 import { createEventRecordSchema, eventIdSchema } from "./event.schema.js";
 import { hasDatabaseErrorCode } from "../shared/database-error.js";
@@ -131,5 +132,38 @@ eventsRouter.put("/:id", async (req, res) => {
 
     console.error("Failed to update event", error);
     res.status(500).json({ error: "Failed to update event" });
+  }
+});
+// Delete event
+eventsRouter.delete("/:id", async (req, res) => {
+  try {
+    const validationResult = eventIdSchema.safeParse(req.params.id);
+
+    if (!validationResult.success) {
+      res.status(400).json({
+        error: "Invalid event id",
+        details: validationResult.error.issues,
+      });
+      return;
+    }
+
+    const wasDeleted = await deleteEvent(validationResult.data);
+
+    if (!wasDeleted) {
+      res.status(404).json({ error: "Event not found" });
+      return;
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    if (hasDatabaseErrorCode(error) && error.code === "23503") {
+      res.status(409).json({
+        error: "Event cannot be deleted because it is still in use",
+      });
+      return;
+    }
+
+    console.error("Failed to delete event", error);
+    res.status(500).json({ error: "Failed to delete event" });
   }
 });

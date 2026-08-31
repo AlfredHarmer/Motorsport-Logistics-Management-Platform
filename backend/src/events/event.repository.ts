@@ -120,3 +120,14 @@ export const updateEvent = async (
 
   return result.rows[0] ?? null;
 };
+
+export const deleteEvent = async (
+  id: number,
+): Promise<boolean> => {
+  const result = await pool.query<{ id: number }>(
+    `DELETE FROM events WHERE id = $1
+    RETURNING id`, [id],
+  );
+
+  return result.rowCount === 1;
+};
