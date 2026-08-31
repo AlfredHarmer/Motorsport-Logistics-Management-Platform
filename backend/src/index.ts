@@ -4,6 +4,7 @@ import { locationRouter } from "./locations/location.routes.js";
 import { championshipsRouter } from "./championships/championship.routes.js";
 import { championshipSeasonsRouter } from "./championship-seasons/championship-seasons.routes.js";
 import { eventsRouter } from "./events/event.routes.js";
+import { equipmentRouter } from "./equipment/equipment.routes.js";
 
 const app = express();
 
@@ -25,5 +26,6 @@ app.use("/api/locations", locationRouter);
 app.use("/api/championships", championshipsRouter);
 app.use("/api/championship-seasons", championshipSeasonsRouter);
 app.use("/api/events", eventsRouter);
+app.use("/api/equipment", equipmentRouter);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
