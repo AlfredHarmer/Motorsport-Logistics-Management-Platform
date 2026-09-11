@@ -2,6 +2,7 @@ import { pool } from "../database.js";
 import type { 
   CreateEquipmentTransferInput,
   EquipmentTransferRecord,
+  TransferStatus,
 } from "./transfer.types.js";
 import type { PoolClient } from "pg";
 
@@ -130,4 +131,33 @@ export const getEquipmentCurrentLocationForUpdate = async (
     [equipmentId],
   );
   return result.rows[0]?.currentLocationId ?? null;
+};
+
+
+export const getTransferStatusForUpdate = async (
+  client: PoolClient,
+  transferId: number,
+): Promise<TransferStatus | null> => {
+  const result = await client.query<{ status: TransferStatus }>(
+    `SELECT
+    status
+    FROM equipment_transfers
+    WHERE id = $1
+    FOR UPDATE`,
+    [transferId],
+  );
+  return result.rows[0]?.status ?? null;
+};
+
+export const deleteTransfer = async (
+  client: PoolClient,
+  id: number,
+): Promise<boolean> => {
+  const result = await client.query<{ id: number }>(
+    `DELETE FROM equipment_transfers
+    WHERE id = $1
+    RETURNING id`,
+    [id],
+  );
+  return result.rowCount === 1; 
 };

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createPlannedTransfer } from "./transfer.service.js";
+import { createPlannedTransfer, deletePlannedTransfer } from "./transfer.service.js";
 import {
   createEquipmentTransferSchema,
   equipmentTransferIdSchema,
@@ -94,5 +94,37 @@ transfersRouter.post("/", async (req, res) => {
 
     console.error("Failed to create equipment transfer", error);
     res.status(500).json({ error: "Failed to create equipment transfer" });
+  }
+});
+
+transfersRouter.delete("/:id", async (req, res) => {
+  try {
+    const validationResult = equipmentTransferIdSchema.safeParse(req.params.id);
+
+    if (!validationResult.success) {
+      res.status(400).json({
+        error: "Invalid transfer ID data",
+        details: validationResult.error.issues,
+      });
+      return;
+    }
+
+    await deletePlannedTransfer(validationResult.data);
+
+    res.status(204).send();
+  } catch (error) {
+    if (error instanceof TransferError) {
+      if (error.code === "TRANSFER_NOT_FOUND") {
+        res.status(404).json({ error: error.message });
+        return;
+      }
+
+      if (error.code === "TRANSFER_NOT_DELETABLE") {
+        res.status(409).json({ error: error.message });
+        return;
+      }
+    }
+    console.error("Failed to delete Transfer", error);
+    res.status(500).json({ error: "Failed to delete Transfer"})
   }
 });
