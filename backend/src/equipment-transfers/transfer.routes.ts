@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createPlannedTransfer, deletePlannedTransfer } from "./transfer.service.js";
+import { createPlannedTransfer, deletePlannedTransfer, departTransfer } from "./transfer.service.js";
 import {
   createEquipmentTransferSchema,
   equipmentTransferIdSchema,
@@ -125,6 +125,37 @@ transfersRouter.delete("/:id", async (req, res) => {
       }
     }
     console.error("Failed to delete Transfer", error);
-    res.status(500).json({ error: "Failed to delete Transfer"})
+    res.status(500).json({ error: "Failed to delete Transfer"});
+  }
+});
+
+transfersRouter.patch("/:id/depart", async (req, res) => {
+  try {
+    const validationResult = equipmentTransferIdSchema.safeParse(req.params.id);
+
+    if (!validationResult.success) {
+      res.status(400).json({
+        error: "Invalid equipment transfer id",
+        details: validationResult.error.issues,
+      });
+      return;
+    }
+
+    const updatedTransfer = await departTransfer(validationResult.data);
+    res.status(200).json(updatedTransfer);
+  } catch (error) {
+    if (error instanceof TransferError) {
+      if (error.code === "TRANSFER_NOT_FOUND") {
+        res.status(404).json({error: error.message});
+        return;
+      }
+
+      if (error.code === "TRANSFER_NOT_DEPARTABLE") {
+        res.status(409).json({ error: error.message});
+        return;
+      }
+    }
+    console.error("Failed to update transfer status", error);
+    res.status(500).json({ error: "Failed to update transfer status"});
   }
 });

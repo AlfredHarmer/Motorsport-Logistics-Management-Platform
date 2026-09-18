@@ -2,7 +2,8 @@ export type TransferErrorCode =
 | "EQUIPMENT_NOT_FOUND"
 | "ORIGIN_MISMATCH"
 | "TRANSFER_NOT_FOUND"
-| "TRANSFER_NOT_DELETABLE";
+| "TRANSFER_NOT_DELETABLE"
+| "TRANSFER_NOT_DEPARTABLE";
 
 export class TransferError extends Error {
   constructor(
