@@ -8,9 +8,11 @@ import {
   getEquipmentCurrentLocationForUpdate,
   getTransferStatusForUpdate,
   insertPlannedTransfer,
+  markTransferArrived,
   markTransferDeparted,
 } from "./transfer.repository.js";
 import { TransferError } from "./transfer.errors.js";
+import { updateEquipmentCurrentLocation } from "../equipment/equipment.repository.js";
 
 export const createPlannedTransfer = async (
   input: CreateEquipmentTransferInput,
@@ -111,6 +113,55 @@ export const departTransfer = async (
 
     await client.query("COMMIT");
     return departedTransfer;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+export const transferArrived = async (
+  id: number,
+): Promise<EquipmentTransferRecord> => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const transferStatus = await getTransferStatusForUpdate(client, id);
+
+    if (transferStatus === null) {
+      throw new TransferError(
+        "TRANSFER_NOT_FOUND",
+        "No transfer with that id found"
+      );
+    }
+
+    if (transferStatus !== "in_transit" && transferStatus !== "diverted") {
+      throw new TransferError(
+        "TRANSFER_NOT_ARRIVABLE",
+        "Transfer can not arrive unless it is in transit or diverted"
+      );
+    }
+
+    const arrivedTransfer = await markTransferArrived(client, id);
+
+    if (arrivedTransfer === null) {
+      throw new Error("Transfer was eligible for mark arrive but no row returned");
+    }
+
+    const wasUpdated = await updateEquipmentCurrentLocation(
+      client,
+      arrivedTransfer.equipmentId,
+      arrivedTransfer.destinationLocationId,
+    );
+    
+    if (!wasUpdated) {
+      throw new Error("Equipment location could not be updated");
+    }
+
+    await client.query("COMMIT");
+    return arrivedTransfer;
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;

@@ -1,3 +1,4 @@
+import type { PoolClient } from "pg";
 import { pool } from "../database.js";
 import type {
   CreateEquipmentInput,
@@ -125,5 +126,21 @@ export const deleteEquipment = async (id: number): Promise<boolean> => {
     [id],
   );
 
+  return result.rowCount === 1;
+};
+
+export const updateEquipmentCurrentLocation = async (
+  client: PoolClient,
+  equipmentId: number,
+  destinationLocationId: number,
+): Promise<boolean> => {
+  const result = await client.query<{ id: number }>(
+    `UPDATE equipment
+    SET
+    current_location_id = $2
+    WHERE id = $1
+    RETURNING id`,
+    [equipmentId, destinationLocationId],
+  );
   return result.rowCount === 1;
 };

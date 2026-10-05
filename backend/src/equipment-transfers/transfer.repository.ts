@@ -194,3 +194,37 @@ export const markTransferDeparted = async (
   );
   return result.rows[0] ?? null;
 };
+
+export const markTransferArrived = async (
+  client: PoolClient,
+  id: number,
+): Promise<EquipmentTransferRecord | null> => {
+  const result = await client.query<EquipmentTransferRecord>(
+    `UPDATE equipment_transfers
+    SET
+    status = 'arrived',
+    actual_arrival = NOW()
+    WHERE id = $1
+    AND status IN ('in_transit', 'diverted')
+    RETURNING
+    id,
+    equipment_id AS "equipmentId",
+    origin_location_id AS "originLocationId",
+    destination_location_id AS "destinationLocationId",
+    related_event_id AS "relatedEventId",
+    planned_departure::text AS "plannedDeparture",
+    expected_arrival::text AS "expectedArrival",
+    actual_departure::text AS "actualDeparture",
+    is_delayed AS "isDelayed",
+    revised_expected_arrival::text AS "revisedExpectedArrival",
+    revised_departure::text AS "revisedDeparture",
+    delay_reason AS "delayReason",
+    actual_arrival::text AS "actualArrival",
+    transport_method AS "transportMethod",
+    status,
+    notes`,
+    [id],
+  );
+  return result.rows[0] ?? null;
+};
+

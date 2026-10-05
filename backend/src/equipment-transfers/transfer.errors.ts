@@ -3,7 +3,8 @@ export type TransferErrorCode =
 | "ORIGIN_MISMATCH"
 | "TRANSFER_NOT_FOUND"
 | "TRANSFER_NOT_DELETABLE"
-| "TRANSFER_NOT_DEPARTABLE";
+| "TRANSFER_NOT_DEPARTABLE"
+| "TRANSFER_NOT_ARRIVABLE";
 
 export class TransferError extends Error {
   constructor(
