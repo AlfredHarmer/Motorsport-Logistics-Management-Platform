@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { createPlannedTransfer, deletePlannedTransfer, departTransfer } from "./transfer.service.js";
+import { cancelTransfer, createPlannedTransfer,
+  deletePlannedTransfer,
+  departTransfer,
+  transferArrived,
+} from "./transfer.service.js";
 import {
   createEquipmentTransferSchema,
   equipmentTransferIdSchema,
@@ -151,11 +155,73 @@ transfersRouter.patch("/:id/depart", async (req, res) => {
       }
 
       if (error.code === "TRANSFER_NOT_DEPARTABLE") {
-        res.status(409).json({ error: error.message});
+        res.status(409).json({error: error.message});
         return;
       }
     }
     console.error("Failed to update transfer status", error);
     res.status(500).json({ error: "Failed to update transfer status"});
+  }
+});
+
+transfersRouter.patch("/:id/arrived", async (req, res) => {
+  try {
+    const validationResult = equipmentTransferIdSchema.safeParse(req.params.id);
+
+    if (!validationResult.success) {
+      res.status(400).json({
+        error: "Invalid equipment transfer id",
+        details: validationResult.error.issues,
+      });
+      return;
+    }
+
+    const updatedTransfer = await transferArrived(validationResult.data);
+    res.status(200).json(updatedTransfer);
+  } catch (error) {
+    if (error instanceof TransferError) {
+      if (error.code === "TRANSFER_NOT_FOUND") {
+        res.status(404).json({error: error.message});
+        return;
+      }
+
+      if (error.code === "TRANSFER_NOT_ARRIVABLE"){
+        res.status(409).json({error: error.message});
+        return;
+      }
+    }
+    console.error("Failed to update transfer status", error);
+    res.status(500).json({error: "Failed to update transfer status"});
+  }
+});
+
+transfersRouter.patch("/:id/cancel", async ( req, res) => {
+  try {
+    const validationResult = equipmentTransferIdSchema.safeParse(req.params.id);
+
+    if (!validationResult.success) {
+      res.status(400).json({
+        error: "Invlaid transfer id",
+        details: validationResult.error.issues,
+      });
+      return;
+    }
+
+    const cancelledTransfer = await cancelTransfer(validationResult.data);
+    res.status(200).json(cancelledTransfer);
+  } catch (error) {
+    if (error instanceof TransferError) {
+      if (error.code === "TRANSFER_NOT_FOUND") {
+        res.status(404).json({error: error.message})
+        return;
+      }
+      
+      if (error.code === "TRANSFER_NOT_CANCELLABLE") {
+        res.status(409).json({error: error.message})
+        return;
+      }
+    }
+    console.error("Failed to cancel transfer", error);
+    res.status(500).json({error: "Failed to cancel transfer"});
   }
 });

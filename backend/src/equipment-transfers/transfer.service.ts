@@ -9,6 +9,7 @@ import {
   getTransferStatusForUpdate,
   insertPlannedTransfer,
   markTransferArrived,
+  markTransferCancelled,
   markTransferDeparted,
 } from "./transfer.repository.js";
 import { TransferError } from "./transfer.errors.js";
@@ -162,6 +163,45 @@ export const transferArrived = async (
 
     await client.query("COMMIT");
     return arrivedTransfer;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+export const cancelTransfer = async (
+  id: number,
+): Promise<EquipmentTransferRecord> => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const transferStatus = await getTransferStatusForUpdate(client, id);
+
+    if (transferStatus === null) {
+      throw new TransferError(
+        "TRANSFER_NOT_FOUND",
+        "No transfer with that id found",
+      );
+    }
+
+    if (transferStatus === "arrived" || transferStatus === "cancelled") {
+      throw new TransferError(
+        "TRANSFER_NOT_CANCELLABLE",
+        "Transfer cannot be cancelled when not planned or already cancelled",
+      );
+    }
+
+    const cancelledTransfer = await markTransferCancelled(client, id);
+
+    if (cancelledTransfer === null) {
+      throw new Error("Transfer was eligible for cancellation but no row returned");
+    }
+
+    await client.query("COMMIT");
+    return cancelledTransfer;
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
