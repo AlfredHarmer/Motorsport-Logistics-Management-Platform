@@ -11,6 +11,7 @@ import {
   markTransferArrived,
   markTransferCancelled,
   markTransferDeparted,
+  markTransferDiverted,
 } from "./transfer.repository.js";
 import { TransferError } from "./transfer.errors.js";
 import { updateEquipmentCurrentLocation } from "../equipment/equipment.repository.js";
@@ -208,4 +209,44 @@ export const cancelTransfer = async (
   } finally {
     client.release();
   }
+};
+
+export const divertTransfer = async (
+  id: number,
+  newDestinationId: number,
+): Promise<EquipmentTransferRecord> => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const transferStatus = await getTransferStatusForUpdate(client, id);
+
+    if (transferStatus === null) {
+      throw new TransferError(
+        "TRANSFER_NOT_FOUND",
+        "No transfer with that id found",
+      );
+    }
+
+    if (transferStatus !== 'in_transit' && transferStatus !== 'diverted') {
+      throw new TransferError(
+        "TRANSFER_NOT_DIVERTABLE",
+        "Transfer cannot be diverted when not in transit or diverted"
+      );
+    }
+
+    const divertedTransfer = await markTransferDiverted(client, id, newDestinationId);
+
+    if (divertedTransfer === null) {
+      throw new Error("Transfer was eligable for diversion but no row returned");
+    }
+
+    await client.query("COMMIT");
+    return divertedTransfer;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  };
 };

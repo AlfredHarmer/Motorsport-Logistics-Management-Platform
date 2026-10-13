@@ -4,7 +4,7 @@ import type {
   EquipmentTransferRecord,
   TransferStatus,
 } from "./transfer.types.js";
-import type { PoolClient } from "pg";
+import type { Pool, PoolClient } from "pg";
 
 export const getAllActiveTransfers = async (): Promise<
   EquipmentTransferRecord[]
@@ -256,6 +256,40 @@ export const markTransferCancelled = async (
     status,
     notes`,
     [id],
+  );
+  return result.rows[0] ?? null;
+};
+
+export const markTransferDiverted = async (
+  client: PoolClient,
+  id: number,
+  newDestinationId: number,
+): Promise<EquipmentTransferRecord | null> => {
+  const result = await client.query<EquipmentTransferRecord>(
+    `UPDATE equipment_transfers
+    SET
+    status = 'diverted',
+    destination_location_id = $2
+    WHERE id = $1
+    AND status IN ('in_transit', 'diverted')
+    RETURNING
+    id,
+    equipment_id AS "equipmentId",
+    origin_location_id AS "originLocationId",
+    destination_location_id AS "destinationLocationId",
+    related_event_id AS "relatedEventId",
+    planned_departure::text AS "plannedDeparture",
+    expected_arrival::text AS "expectedArrival",
+    actual_departure::text AS "actualDeparture",
+    is_delayed AS "isDelayed",
+    revised_expected_arrival::text AS "revisedExpectedArrival",
+    revised_departure::text AS "revisedDeparture",
+    delay_reason AS "delayReason",
+    actual_arrival::text AS "actualArrival",
+    transport_method AS "transportMethod",
+    status,
+    notes`,
+    [id, newDestinationId],
   );
   return result.rows[0] ?? null;
 };

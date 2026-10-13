@@ -32,3 +32,7 @@ export const createEquipmentTransferSchema = z.object({
 );
 
 export const equipmentTransferIdSchema = z.coerce.number().int().positive();
+
+export const divertTransferSchema = z.object({
+  destinationLocationId: z.coerce.number().int().positive(),
+});

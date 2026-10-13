@@ -2,10 +2,12 @@ import { Router } from "express";
 import { cancelTransfer, createPlannedTransfer,
   deletePlannedTransfer,
   departTransfer,
+  divertTransfer,
   transferArrived,
 } from "./transfer.service.js";
 import {
   createEquipmentTransferSchema,
+  divertTransferSchema,
   equipmentTransferIdSchema,
 } from "./transfer.schema.js";
 import { hasDatabaseErrorCode } from "../shared/database-error.js";
@@ -195,7 +197,7 @@ transfersRouter.patch("/:id/arrived", async (req, res) => {
   }
 });
 
-transfersRouter.patch("/:id/cancel", async ( req, res) => {
+transfersRouter.patch("/:id/cancel", async (req, res) => {
   try {
     const validationResult = equipmentTransferIdSchema.safeParse(req.params.id);
 
@@ -224,4 +226,55 @@ transfersRouter.patch("/:id/cancel", async ( req, res) => {
     console.error("Failed to cancel transfer", error);
     res.status(500).json({error: "Failed to cancel transfer"});
   }
+});
+
+transfersRouter.patch("/:id/divert", async (req, res) => {
+  try {
+    const validationResult = equipmentTransferIdSchema.safeParse(req.params.id);
+
+    if (!validationResult.success) {
+      res.status(400).json({
+        error: "Invalid transfer id",
+        details: validationResult.error.issues,
+      });
+      return;
+    }
+
+    const bodyValidation = divertTransferSchema.safeParse(req.body);
+
+    if (!bodyValidation.success) {
+      res.status(400).json({
+        error: "Invalid new destination id",
+        details: bodyValidation.error.issues,
+      });
+      return;
+    }
+
+    const newDestinationId = bodyValidation.data.destinationLocationId; 
+
+    const divertedTransfer = await divertTransfer(validationResult.data, newDestinationId);
+    res.status(200).json(divertedTransfer);
+  } catch (error) {
+    if (error instanceof TransferError) {
+      if (error.code === "TRANSFER_NOT_FOUND") {
+        res.status(404).json({error: error.message});
+        return;
+      }
+
+      if (error.code === "TRANSFER_NOT_DIVERTABLE") {
+        res.status(409).json({error: error.message});
+        return;
+      }
+    }
+
+    if (hasDatabaseErrorCode(error) && error.code === "23503") {
+      res.status(409).json({
+        error: "Location does not exist",
+      });
+      return;
+    }
+
+    console.error("Failed to divert transfer", error);
+    res.status(500).json({error: "Failed to divert transfer"});
+  };
 });

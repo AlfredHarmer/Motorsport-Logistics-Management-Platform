@@ -5,7 +5,8 @@ export type TransferErrorCode =
 | "TRANSFER_NOT_DELETABLE"
 | "TRANSFER_NOT_DEPARTABLE"
 | "TRANSFER_NOT_ARRIVABLE"
-| "TRANSFER_NOT_CANCELLABLE";
+| "TRANSFER_NOT_CANCELLABLE"
+| "TRANSFER_NOT_DIVERTABLE";
 
 export class TransferError extends Error {
   constructor(
