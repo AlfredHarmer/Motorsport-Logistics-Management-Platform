@@ -2,6 +2,8 @@ import { pool } from "../database.js";
 import type {
   CreateEquipmentTransferInput,
   EquipmentTransferRecord,
+  TransferStatus,
+  UpdateEquipmentTransferRecord,
 } from "./transfer.types.js";
 import {
   deleteTransfer,
@@ -12,6 +14,7 @@ import {
   markTransferCancelled,
   markTransferDeparted,
   markTransferDiverted,
+  updateTransferDetails,
 } from "./transfer.repository.js";
 import { TransferError } from "./transfer.errors.js";
 import { updateEquipmentCurrentLocation } from "../equipment/equipment.repository.js";
@@ -243,6 +246,53 @@ export const divertTransfer = async (
 
     await client.query("COMMIT");
     return divertedTransfer;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  };
+};
+
+export const updateTransfer = async (
+  id: number,
+  input: UpdateEquipmentTransferRecord
+): Promise<EquipmentTransferRecord> => {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const editableStatuses: TransferStatus[] = [
+    "planned",
+    "in_transit",
+    "diverted",
+    ];
+
+    const transferStatus = await getTransferStatusForUpdate(client, id);
+
+    if (transferStatus === null) {
+      throw new TransferError(
+        "TRANSFER_NOT_FOUND",
+        "No transfer with that id found"
+      );
+    }
+
+    if (!editableStatuses.includes(transferStatus)) {
+      throw new TransferError(
+        "TRANSFER_NOT_EDITABLE",
+        "Transfer is not editable in this status"
+      );
+    }
+
+    const updatedTransfer = await updateTransferDetails(client, id, input);
+
+    if (updatedTransfer === null) {
+      throw new Error("Transfer was eligable for edit but no row returned");
+    }
+
+    await client.query("COMMIT");
+    return updatedTransfer;
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;

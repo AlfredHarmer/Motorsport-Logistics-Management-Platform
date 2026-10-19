@@ -3,11 +3,13 @@ import { cancelTransfer, createPlannedTransfer,
   deletePlannedTransfer,
   departTransfer,
   divertTransfer,
+  updateTransfer,
   transferArrived,
 } from "./transfer.service.js";
 import {
   createEquipmentTransferSchema,
   divertTransferSchema,
+  editEquipmentTransferSchema,
   equipmentTransferIdSchema,
 } from "./transfer.schema.js";
 import { hasDatabaseErrorCode } from "../shared/database-error.js";
@@ -19,6 +21,7 @@ import {
 
 export const transfersRouter = Router();
 
+// Get transfers
 transfersRouter.get("/", async (_req, res) => {
   try {
     const activeTransfers = await getAllActiveTransfers();
@@ -30,6 +33,7 @@ transfersRouter.get("/", async (_req, res) => {
   }
 });
 
+// Get transfer by id 
 transfersRouter.get("/:id", async (req, res) => {
   try {
     const validationResult = equipmentTransferIdSchema.safeParse(req.params.id);
@@ -56,6 +60,7 @@ transfersRouter.get("/:id", async (req, res) => {
   }
 });
 
+// Create new transfer
 transfersRouter.post("/", async (req, res) => {
   try {
     const validationResult = createEquipmentTransferSchema.safeParse(req.body);
@@ -103,6 +108,7 @@ transfersRouter.post("/", async (req, res) => {
   }
 });
 
+// Delete transfer
 transfersRouter.delete("/:id", async (req, res) => {
   try {
     const validationResult = equipmentTransferIdSchema.safeParse(req.params.id);
@@ -135,6 +141,7 @@ transfersRouter.delete("/:id", async (req, res) => {
   }
 });
 
+// Mark transfer as departed
 transfersRouter.patch("/:id/depart", async (req, res) => {
   try {
     const validationResult = equipmentTransferIdSchema.safeParse(req.params.id);
@@ -166,6 +173,7 @@ transfersRouter.patch("/:id/depart", async (req, res) => {
   }
 });
 
+// Mark transfer as arrived
 transfersRouter.patch("/:id/arrived", async (req, res) => {
   try {
     const validationResult = equipmentTransferIdSchema.safeParse(req.params.id);
@@ -197,6 +205,7 @@ transfersRouter.patch("/:id/arrived", async (req, res) => {
   }
 });
 
+// Mark transfer as cancelled
 transfersRouter.patch("/:id/cancel", async (req, res) => {
   try {
     const validationResult = equipmentTransferIdSchema.safeParse(req.params.id);
@@ -228,6 +237,7 @@ transfersRouter.patch("/:id/cancel", async (req, res) => {
   }
 });
 
+// Mark transfer as diverted
 transfersRouter.patch("/:id/divert", async (req, res) => {
   try {
     const validationResult = equipmentTransferIdSchema.safeParse(req.params.id);
@@ -276,5 +286,55 @@ transfersRouter.patch("/:id/divert", async (req, res) => {
 
     console.error("Failed to divert transfer", error);
     res.status(500).json({error: "Failed to divert transfer"});
+  };
+});
+
+transfersRouter.patch("/:id/edit", async (req, res) => {
+  try {
+
+    const validationResult = equipmentTransferIdSchema.safeParse(req.params.id);
+
+    if (!validationResult.success) {
+      res.status(400).json({
+        error: "Invalid transfer id",
+        details: validationResult.error.issues,
+      });
+      return;
+    }
+
+    const bodyValidation = editEquipmentTransferSchema.safeParse(req.body);
+
+    if (!bodyValidation.success) {
+      res.status(400).json({
+        error: "Invalid request body",
+        details: bodyValidation.error.issues,
+      });
+      return;
+    }
+
+    const updatedTransfer = await updateTransfer(validationResult.data, bodyValidation.data);
+    res.status(200).json(updatedTransfer);
+  } catch (error) {
+    if (error instanceof TransferError) {
+      if (error.code === "TRANSFER_NOT_FOUND") {
+        res.status(404).json({error: error.message});
+        return;
+      }
+
+      if (error.code === "TRANSFER_NOT_EDITABLE") {
+        res.status(409).json({error: error.message});
+        return;
+      }
+    }
+
+    if (hasDatabaseErrorCode(error) && error.code === "23503") {
+      res.status(409).json({
+        error: "Event does not exist",
+      });
+      return;
+    }
+
+    console.error("Failed to edit transfer", error);
+    res.status(500).json({error: "Failed to edit transfer"});
   };
 });

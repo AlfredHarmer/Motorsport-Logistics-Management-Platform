@@ -42,3 +42,15 @@ export interface CreateEquipmentTransferInput {
   notes: string | null;
 }
 
+export interface UpdateEquipmentTransferRecord {
+  relatedEventId: number | null;
+  plannedDeparture: string;
+  expectedArrival: string;
+  isDelayed: boolean;
+  revisedExpectedArrival: string | null;
+  revisedDeparture: string | null;
+  delayReason: string | null;
+  transportMethod: TransportMethod;
+  notes: string | null;
+}
+

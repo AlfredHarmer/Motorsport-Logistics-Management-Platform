@@ -3,8 +3,9 @@ import type {
   CreateEquipmentTransferInput,
   EquipmentTransferRecord,
   TransferStatus,
+  UpdateEquipmentTransferRecord,
 } from "./transfer.types.js";
-import type { Pool, PoolClient } from "pg";
+import type { PoolClient } from "pg";
 
 export const getAllActiveTransfers = async (): Promise<
   EquipmentTransferRecord[]
@@ -291,5 +292,58 @@ export const markTransferDiverted = async (
     notes`,
     [id, newDestinationId],
   );
+  return result.rows[0] ?? null;
+};
+
+export const updateTransferDetails = async (
+  client: PoolClient,
+  id: number,
+  input: UpdateEquipmentTransferRecord,
+): Promise<EquipmentTransferRecord | null> => {
+  const result = await client.query<EquipmentTransferRecord>(
+    `UPDATE equipment_transfers
+    SET
+    related_event_id = $1,
+    planned_departure = $2,
+    expected_arrival = $3,
+    is_delayed = $4,
+    revised_expected_arrival = $5,
+    revised_departure = $6,
+    delay_reason = $7,
+    transport_method = $8,
+    notes = $9
+    WHERE id = $10
+    AND status IN ('planned', 'in_transit', 'diverted')
+    RETURNING
+    id,
+    equipment_id AS "equipmentId",
+    origin_location_id AS "originLocationId",
+    destination_location_id AS "destinationLocationId",
+    related_event_id AS "relatedEventId",
+    planned_departure::text AS "plannedDeparture",
+    expected_arrival::text AS "expectedArrival",
+    actual_departure::text AS "actualDeparture",
+    is_delayed AS "isDelayed",
+    revised_expected_arrival::text AS "revisedExpectedArrival",
+    revised_departure::text AS "revisedDeparture",
+    delay_reason AS "delayReason",
+    actual_arrival::text AS "actualArrival",
+    transport_method AS "transportMethod",
+    status,
+    notes`,
+    [
+      input.relatedEventId,
+      input.plannedDeparture,
+      input.expectedArrival,
+      input.isDelayed,
+      input.revisedExpectedArrival,
+      input.revisedDeparture,
+      input.delayReason,
+      input.transportMethod,
+      input.notes,
+      id,
+    ],
+  );
+
   return result.rows[0] ?? null;
 };
