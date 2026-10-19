@@ -289,7 +289,7 @@ transfersRouter.patch("/:id/divert", async (req, res) => {
   };
 });
 
-transfersRouter.patch("/:id/edit", async (req, res) => {
+transfersRouter.patch("/:id/update", async (req, res) => {
   try {
 
     const validationResult = equipmentTransferIdSchema.safeParse(req.params.id);
