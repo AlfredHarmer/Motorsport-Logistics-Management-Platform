@@ -285,7 +285,15 @@ export const updateTransfer = async (
       );
     }
 
-    const updatedTransfer = await updateTransferDetails(client, id, input);
+    const inputToSave = { ...input };
+
+    if (!inputToSave.isDelayed) {
+      inputToSave.revisedDeparture = null;
+      inputToSave.revisedExpectedArrival = null;
+      inputToSave.delayReason = null;
+    }
+
+    const updatedTransfer = await updateTransferDetails(client, id, inputToSave);
 
     if (updatedTransfer === null) {
       throw new Error("Transfer was eligable for edit but no row returned");
