@@ -1,0 +1,42 @@
+
+
+.transfer-row__summary {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 0.3fr)
+    minmax(0, 1.5fr)
+    minmax(0, 1fr)
+    minmax(0, 1.2fr)
+    minmax(0, 0.8fr);
+  gap: 1rem;
+}
+
+.transfer-row {
+  padding: 1rem;
+  border-bottom: 1px solid #ccc;
+}
+
+@media (max-width: 800px) {
+  .transfer-row__summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .transfer-row__summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+.transfer-notes {
+  width: min(28rem, 90vw);
+  box-sizing: border-box;
+  padding: 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+}
+
+.transfer-notes::backdrop {
+  background: rgb(0 0 0 / 35%);
+  backdrop-filter: blur(3px);
+}
